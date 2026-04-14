@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
+const { notifyMention, notifyHighPriorityNote } = require('../services/teamsNotifier');
 
 // GET /api/notes?date=YYYY-MM-DD&shift=morning
 // Devuelve notas del departamento del usuario autenticado
@@ -38,6 +39,13 @@ router.post('/', auth, async (req, res) => {
       department: req.user.department,
     });
     await note.save();
+    if (note.priority === 'alta') {
+      notifyHighPriorityNote(note).catch(console.error);
+    }
+    if (note.mentions && note.mentions.length > 0) {
+      // Las menciones son IDs — notificar sin bloquear
+      notifyMention(note, 'Un compañero').catch(console.error);
+    }
     res.status(201).json(note);
   } catch (err) {
     res.status(400).json({ error: err.message });

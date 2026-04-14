@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Handover = require('../models/Handover');
 const auth = require('../middleware/auth');
+const { notifyHandoverDelivered, notifyHandoverReceived } = require('../services/teamsNotifier');
 
 // GET /api/handovers
 router.get('/', auth, async (req, res) => {
@@ -23,6 +24,11 @@ router.post('/', auth, async (req, res) => {
       department: req.user.department,
     });
     await handover.save();
+    console.log('Traspaso guardado, disparando notificación Teams...');
+    console.log('Departamento del traspaso:', handover.department);
+    notifyHandoverDelivered(handover).catch((err) =>
+      console.error('Error en notifyHandoverDelivered:', err)
+    );
     res.status(201).json(handover);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -41,6 +47,7 @@ router.put('/:id/receive', auth, async (req, res) => {
       },
       { new: true }
     );
+    notifyHandoverReceived(handover).catch(console.error);
     if (!handover) return res.status(404).json({ error: 'Traspaso no encontrado' });
     res.json(handover);
   } catch (err) {
