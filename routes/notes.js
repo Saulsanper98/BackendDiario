@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { notifyMention, notifyHighPriorityNote } = require('../services/teamsNotifier');
 
@@ -39,12 +40,20 @@ router.post('/', auth, async (req, res) => {
       department: req.user.department,
     });
     await note.save();
+    console.log('Nota guardada. Priority:', note.priority, 'Mentions:', note.mentions);
     if (note.priority === 'alta') {
       notifyHighPriorityNote(note).catch(console.error);
     }
+
     if (note.mentions && note.mentions.length > 0) {
-      // Las menciones son IDs — notificar sin bloquear
-      notifyMention(note, 'Un compañero').catch(console.error);
+      // Resolver nombres de los mencionados desde MongoDB
+      User.find({ _id: { $in: note.mentions } })
+        .then((mentionedUsers) => {
+          mentionedUsers.forEach((u) => {
+            notifyMention(note, u.name).catch(console.error);
+          });
+        })
+        .catch(console.error);
     }
     res.status(201).json(note);
   } catch (err) {

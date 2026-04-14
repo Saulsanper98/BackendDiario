@@ -46,3 +46,41 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
+
+const { notifyOverdueTask } = require('./services/teamsNotifier');
+const Project = require('./models/Project');
+
+// Verificar tareas vencidas cada día a las 8:00
+function checkOverdueTasks() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+
+  Project.find({})
+    .then((projects) => {
+      projects.forEach((project) => {
+        (project.tasks || []).forEach((task) => {
+          if (!task.done && task.dueDate && task.dueDate < today) {
+            notifyOverdueTask(task, project, project.department).catch(console.error);
+          }
+        });
+      });
+    })
+    .catch(console.error);
+}
+
+// Ejecutar a las 8:00 cada día
+function scheduleDaily8am() {
+  const now = new Date();
+  const next8am = new Date();
+  next8am.setHours(8, 0, 0, 0);
+  if (next8am <= now) next8am.setDate(next8am.getDate() + 1);
+  const msUntil8am = next8am - now;
+  setTimeout(() => {
+    checkOverdueTasks();
+    setInterval(checkOverdueTasks, 24 * 60 * 60 * 1000);
+  }, msUntil8am);
+}
+
+scheduleDaily8am();
+// Test inmediato — eliminar en producción
+setTimeout(checkOverdueTasks, 5000);

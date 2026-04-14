@@ -10,30 +10,20 @@ const DEPT_CHANNELS = {
 };
 
 async function sendNotification(payload) {
-  if (!POWER_AUTOMATE_URL) {
-    console.log('Teams: POWER_AUTOMATE_WEBHOOK_URL no configurada');
-    return;
-  }
+  if (!POWER_AUTOMATE_URL) return;
 
   const dept = payload.department;
-  if (!DEPT_CHANNELS[dept]) {
-    console.log(`Teams: canal no configurado para ${dept}`);
-    return;
-  }
+  if (!DEPT_CHANNELS[dept]) return;
 
   try {
     const url = new URL(POWER_AUTOMATE_URL);
-    const htmlContent = `<table style="border:none">
-      <tr><td><b>${payload.title}</b></td></tr>
-      <tr><td>👤 ${payload.author}</td></tr>
-      <tr><td>📅 ${payload.date}</td></tr>
-      <tr><td>📝 ${payload.message}</td></tr>
-    </table>`;
     const body = JSON.stringify({
-      body: {
-        contentType: 'html',
-        content: htmlContent,
-      },
+      event: payload.event,
+      department: payload.department,
+      title: payload.title,
+      message: payload.message,
+      author: payload.author,
+      date: payload.date,
     });
 
     const options = {
@@ -75,7 +65,7 @@ module.exports.notifyHandoverDelivered = async function (handover) {
     department: handover.department,
     title: '🔄 Traspaso de turno entregado',
     author: handover.authorName,
-    date: `${handover.date} ${new Date(handover.deliveredAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+    date: `${handover.date.split('-').reverse().join('/')} ${new Date(handover.deliveredAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
     message: `De ${SHIFTS[handover.fromShift] || handover.fromShift} a ${SHIFTS[handover.toShift] || handover.toShift}${handover.sections?.avisos ? '. Avisos: ' + handover.sections.avisos : ''}`,
   });
 };
@@ -87,7 +77,7 @@ module.exports.notifyHandoverReceived = async function (handover) {
     department: handover.department,
     title: '✅ Traspaso confirmado',
     author: handover.receivedByName,
-    date: new Date(handover.receivedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    date: `${handover.date.split('-').reverse().join('/')} ${new Date(handover.receivedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
     message: `Turno ${SHIFTS[handover.toShift] || handover.toShift} confirmado`,
   });
 };
@@ -99,7 +89,10 @@ module.exports.notifyMention = async function (note, mentionedUserName) {
     department: note.department,
     title: '🔔 Nueva mención en el Diario',
     author: note.authorName,
-    date: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    date:
+      new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' ' +
+      new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
     message: `${mentionedUserName} mencionado en: "${note.title}" (${SHIFTS[note.shift] || note.shift})`,
   });
 };
@@ -111,7 +104,10 @@ module.exports.notifyHighPriorityNote = async function (note) {
     department: note.department,
     title: '📋 Nota de alta prioridad',
     author: note.authorName,
-    date: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    date:
+      new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' ' +
+      new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
     message: `"${note.title}" — ${SHIFTS[note.shift] || note.shift}`,
   });
 };
