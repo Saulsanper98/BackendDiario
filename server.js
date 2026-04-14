@@ -38,6 +38,7 @@ app.use("/api/handovers", require("./routes/handovers"));
 app.use("/api/comments", require("./routes/comments"));
 app.use("/api/users", require("./routes/users"));
 app.use('/api/files', require('./routes/files'));
+app.use('/api/workgroups', require('./routes/workgroups'));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
@@ -84,8 +85,6 @@ function scheduleDaily8am() {
 }
 
 scheduleDaily8am();
-// Test inmediato — eliminar en producción
-setTimeout(checkOverdueTasks, 5000);
 
 // Sincronizar usuarios al arrancar
 setTimeout(() => {

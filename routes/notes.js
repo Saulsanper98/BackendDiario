@@ -44,7 +44,6 @@ router.post('/', auth, async (req, res) => {
     if (note.reminder) {
       createOutlookReminder(note).catch(console.error);
     }
-    console.log('Nota guardada. Priority:', note.priority, 'Mentions:', note.mentions);
     if (note.priority === 'alta') {
       notifyHighPriorityNote(note).catch(console.error);
     }

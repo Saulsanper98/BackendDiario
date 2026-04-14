@@ -123,14 +123,11 @@ module.exports.syncUsersFromEntra = async function () {
       return;
     }
 
-    console.log(`Usuarios encontrados en Entra ID: ${result.value.length}`);
-
     // Filtrar solo usuarios de departamentos que usamos
     const deptEmails = Object.keys(EMAIL_DEPT_MAP);
 
     // Obtener usuarios existentes en MongoDB
     const existingUsers = await User.find({});
-    console.log(`Usuarios existentes en MongoDB: ${existingUsers.length}`);
 
     let colorIndex = existingUsers.length;
     let synced = 0;

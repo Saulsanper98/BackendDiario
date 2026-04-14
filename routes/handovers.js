@@ -24,8 +24,6 @@ router.post('/', auth, async (req, res) => {
       department: req.user.department,
     });
     await handover.save();
-    console.log('Traspaso guardado, disparando notificación Teams...');
-    console.log('Departamento del traspaso:', handover.department);
     notifyHandoverDelivered(handover).catch((err) =>
       console.error('Error en notifyHandoverDelivered:', err)
     );
