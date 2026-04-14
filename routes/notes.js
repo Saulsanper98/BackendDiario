@@ -4,6 +4,7 @@ const Note = require('../models/Note');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { notifyMention, notifyHighPriorityNote } = require('../services/teamsNotifier');
+const { createOutlookReminder } = require('../services/outlookNotifier');
 
 // GET /api/notes?date=YYYY-MM-DD&shift=morning
 // Devuelve notas del departamento del usuario autenticado
@@ -40,6 +41,9 @@ router.post('/', auth, async (req, res) => {
       department: req.user.department,
     });
     await note.save();
+    if (note.reminder) {
+      createOutlookReminder(note).catch(console.error);
+    }
     console.log('Nota guardada. Priority:', note.priority, 'Mentions:', note.mentions);
     if (note.priority === 'alta') {
       notifyHighPriorityNote(note).catch(console.error);
@@ -69,6 +73,9 @@ router.put('/:id', auth, async (req, res) => {
     if (note.authorId !== req.user.userId) return res.status(403).json({ error: 'No autorizado' });
     Object.assign(note, req.body);
     await note.save();
+    if (note.reminder) {
+      createOutlookReminder(note).catch(console.error);
+    }
     res.json(note);
   } catch (err) {
     res.status(400).json({ error: err.message });

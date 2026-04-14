@@ -37,6 +37,7 @@ app.use("/api/docs", require("./routes/docs"));
 app.use("/api/handovers", require("./routes/handovers"));
 app.use("/api/comments", require("./routes/comments"));
 app.use("/api/users", require("./routes/users"));
+app.use('/api/files', require('./routes/files'));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
@@ -48,6 +49,7 @@ app.listen(PORT, () => {
 });
 
 const { notifyOverdueTask } = require('./services/teamsNotifier');
+const { syncUsersFromEntra } = require('./services/entraSync');
 const Project = require('./models/Project');
 
 // Verificar tareas vencidas cada día a las 8:00
@@ -84,3 +86,11 @@ function scheduleDaily8am() {
 scheduleDaily8am();
 // Test inmediato — eliminar en producción
 setTimeout(checkOverdueTasks, 5000);
+
+// Sincronizar usuarios al arrancar
+setTimeout(() => {
+  console.log('=== Iniciando sync de usuarios Entra ID ===');
+  syncUsersFromEntra()
+    .then(() => console.log('=== Sync completado ==='))
+    .catch((err) => console.error('=== Error en sync:', err.message, '==='));
+}, 5000);

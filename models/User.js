@@ -6,6 +6,8 @@ const UserSchema = new mongoose.Schema({
   color:      { type: String, required: true },
   role:       { type: String, default: 'Técnico' },
   department: { type: String, required: true },
+  entraId:    { type: String, default: null },
+  email:      { type: String, default: null },
   active:     { type: Boolean, default: true },
   pin:        { type: String, default: null }, // PIN opcional para selección
 }, { timestamps: true });

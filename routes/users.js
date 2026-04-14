@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { syncUsersFromEntra } = require('../services/entraSync');
 
 // GET /api/users/department - usuarios del departamento del token Microsoft
 router.get('/department', auth, async (req, res) => {
@@ -64,6 +65,17 @@ router.delete('/:id', auth, async (req, res) => {
     );
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/users/sync — sincronizar desde Entra ID (solo admin)
+router.post('/sync', auth, async (req, res) => {
+  try {
+    await syncUsersFromEntra();
+    const users = await User.find({ active: true });
+    res.json({ success: true, count: users.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

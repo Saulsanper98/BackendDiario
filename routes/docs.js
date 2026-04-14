@@ -24,6 +24,8 @@ router.post('/', auth, async (req, res) => {
     await doc.save();
     res.status(201).json(doc);
   } catch (err) {
+    console.error('Error creando documento:', err.message);
+    console.error('Validation errors:', JSON.stringify(err.errors, null, 2));
     res.status(400).json({ error: err.message });
   }
 });
