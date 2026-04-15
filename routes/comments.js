@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Comment = require('../models/Comment');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // GET /api/comments?kind=note&targetId=xxx
@@ -21,10 +22,33 @@ router.get('/', auth, async (req, res) => {
 // POST /api/comments
 router.post('/', auth, async (req, res) => {
   try {
+    const requestedAuthorId =
+      req.body.authorId ||
+      req.body.author_id ||
+      req.body.authorMongoId ||
+      req.body.author?.id ||
+      req.body.author?._id;
+    let finalAuthorId = req.user.userId;
+    let finalAuthorName = req.user.name;
+
+    if (requestedAuthorId) {
+      const selectedAuthor = await User.findById(requestedAuthorId);
+      if (!selectedAuthor) {
+        return res.status(400).json({ error: 'authorId no existe' });
+      }
+      if (selectedAuthor.department !== req.user.department) {
+        return res.status(403).json({ error: 'authorId no autorizado para este departamento' });
+      }
+      finalAuthorId = selectedAuthor._id.toString();
+      finalAuthorName = req.body.authorName || selectedAuthor.name;
+    } else if (req.body.authorName) {
+      return res.status(400).json({ error: 'authorId requerido cuando se envía authorName' });
+    }
+
     const comment = new Comment({
       ...req.body,
-      authorId: req.user.userId,
-      authorName: req.user.name,
+      authorId: finalAuthorId,
+      authorName: finalAuthorName,
       department: req.user.department,
     });
     await comment.save();

@@ -15,6 +15,17 @@ const TaskSchema = new mongoose.Schema({
   createdAt:       { type: String },
 }, { _id: false });
 
+const ActivityLogEntrySchema = new mongoose.Schema({
+  at: { type: Number, default: null },
+  userId: { type: String, default: null },
+  type: { type: String, default: '' },
+  taskName: { type: String, default: '' },
+  taskId: { type: mongoose.Schema.Types.Mixed, default: null },
+  detail: { type: mongoose.Schema.Types.Mixed, default: null },
+  action: { type: String, default: '' },
+  message: { type: String, default: '' },
+}, { _id: false });
+
 const ProjectSchema = new mongoose.Schema({
   name:             { type: String, required: true },
   description:      { type: String, default: '' },
@@ -25,6 +36,7 @@ const ProjectSchema = new mongoose.Schema({
   priority:         { type: String, default: 'normal' },
   dueDate:          { type: String, default: null },
   tasks:            [TaskSchema],
+  activityLog:      { type: [ActivityLogEntrySchema], default: [] },
   images:           { type: mongoose.Schema.Types.Mixed, default: {} },
   shares:           { type: mongoose.Schema.Types.Mixed, default: [] },
   collapsed:        { type: Boolean, default: false },

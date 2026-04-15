@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Document = require('../models/Document');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // GET /api/docs
@@ -16,9 +17,23 @@ router.get('/', auth, async (req, res) => {
 // POST /api/docs
 router.post('/', auth, async (req, res) => {
   try {
+    const requestedAuthorId = req.body.authorId;
+    let finalAuthorId = req.user.userId;
+
+    if (requestedAuthorId) {
+      const selectedAuthor = await User.findById(requestedAuthorId);
+      if (!selectedAuthor) {
+        return res.status(400).json({ error: 'authorId no existe' });
+      }
+      if (selectedAuthor.department !== req.user.department) {
+        return res.status(403).json({ error: 'authorId no autorizado para este departamento' });
+      }
+      finalAuthorId = selectedAuthor._id.toString();
+    }
+
     const doc = new Document({
       ...req.body,
-      authorId: req.user.userId,
+      authorId: finalAuthorId,
       department: req.user.department,
     });
     await doc.save();
